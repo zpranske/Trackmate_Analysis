@@ -1,15 +1,23 @@
+/* PREPROCESS LIVE NIKON 
+ * This script is designed to open a Nikon .nd2 file, generate a MinIP, prompt the user to draw ROIs,  
+ *  and run Trackmate analysis suite. Ideally it would loop for multiple file throughput, but it doesn't yet.
+ */
 
+filetype = ".nd2";
 enlargementfactor = 4; //How many microns to expand the line ROIs
-scalesettings = "distance=1 known=0.1438612 unit=um" //This means 1 px = 0.1438612 microns, check metadata
-img_scale = 0.1438612;
+img_scale = 0.1438612; //This means 1 px = 0.1438612 microns, check metadata
+scalesettings = "distance=1 known=" + img_scale + " unit=um"; 
 
 path2save = getDirectory("Choose folder containing images.")
 path = File.openDialog("Select a File");
 filename = File.getName(path);
-open(path2save + File.separator + filename);
+filename=substring(filename,0,lengthOf(filename)-4); //Remove file extension
+open(path2save + File.separator + filename + filetype);
 
 run("Z Project...", "projection=[Min Intensity]");
-run("Enhance Contrast", "saturated=0.35");
+saveAs("Tiff", path2save + File.separator + "MIN_" + filename + ".tif");
+selectWindow(filename + filetype);
+//run("Enhance Contrast", "saturated=0.35"); //This is an option but did not use for GRC analysis
 
 /*
 filelist = getFileList(path2save) 
@@ -26,31 +34,31 @@ for (i = 0; i < lengthOf(filelist); i++) {
 	saveAs("Tiff", path2save + File.separator + "ALIGNED_SCALED_MAX_" + rootname + "combined.tif");
 	}
 */
-
-run("Set Scale...", scalesettings);
+	run("Set Scale...", scalesettings);
 	run("ROI Manager...");
 	setTool("freeline");
 	
+	// Allow user to draw desired number of ROIs using freehand line tool to trace axons
 	i=0;
 	run("ROI Manager...");
 	roiManager("Show all");
 	while (true) {
 	    run("Select None");
-	    waitForUser("Draw ROI, then hit OK (or hit OK to finish)");
+	    waitForUser("Draw ROI, then hit OK (or hit OK now to finish)");
 	    if (getValue("selection.size")>0) {
 	    	name_ROI = "Line_";
 			Roi.setName(name_ROI+i);
 			roiManager("Add");	
 			run("Measure");
 	    } else {
-	        // Prompt the user to draw an ROI or select "done"
+	        // User has selected OK to move on. Prompt user to draw more ROIs or confirm "done"
 	        Dialog.create("Instructions");
 			Dialog.addCheckbox("Done drawing ROIs?", true);	
 			Dialog.show();
 			choice = Dialog.getCheckbox;
 	        if (choice == 1) {
-	            // Exit the loop when the user selects "done"
-	            break;
+	            // Exit the loop; the user has selected "done"
+	            break; // This would give Prof. Booth a heart attack but I don't care
 	        }
 	    }
 	    i++;
@@ -74,13 +82,18 @@ run("Set Scale...", scalesettings);
 	saveAs("Results", path2save + "/Measure of " + filename + ".csv");
 	
 	// TURN ALL ROIS INTO SINGLE ROI TO USE IN TRACKMATE
+	roiManager("Select All");
 	roiManager("Combine");
-	    
-	   
-run("TrackMate");
+	
+	run("TrackMate");
+	waitForUser("Select ok when done running Trackmate. Don't forget to save XML and run Capture Overlay!");
+	close("TrackMate on " + filename);
 
-waitForUser("Select ok when done running Trackmate. Don't forget to save XML and run Capture Overlay!");
-
-selectWindow("TrackMate capture of " + filename);
-saveAs("Tiff", path2save + File.separator + "TrackMate capture of " + filename + ".tif");
-close(); close(); close(); close();
+	selectWindow("TrackMate capture of " + filename);
+	saveAs("Tiff", path2save + File.separator + "TrackMate capture of " + filename + ".tif");
+	close("MIN_" + filename + ".tif");
+	close(filename + filetype);
+	close("ROI Manager");
+	close("Results");
+	close("TrackMate capture of " + filename + ".tif");
+	run("Collect Garbage");
