@@ -125,6 +125,7 @@ function [ spotTable, spotIDMap ] = trackmateSpots(filePath, featureList)
     features    = NaN( nSpots, n_features );
 
     % Read all spot nodes.
+    disp('Reading spot nodes...')
     for i = 1 : nSpots
         node = nodeList.item( i-1 );
         ID( i )     = str2double( node.getAttribute( SPOT_ID_ATTRIBUTE ) );

@@ -1,12 +1,9 @@
 addpath('C:\Users\Zachary_Pranske\Documents\GitHub\Trackmate_Analysis');
-global path output_path;
-path = uigetdir('C:\Users\Zachary_Pranske\Desktop\Datasets');
-mkdir(path,'output')
-output_path = [path filesep 'output' filesep]; 
-
+global path = uigetdir('C:\Users\Zachary_Pranske\Desktop\Datasets');
 
 file_pattern = fullfile(path, '*.xml'); % Change to whatever pattern you need.
-
+mkdir(path,'output')
+output_path = [path filesep 'output' filesep]; 
 filenames_list = dir(file_pattern);
 
 start_frame = 0;
@@ -19,7 +16,7 @@ for k = 1 : length(filenames_list)
     filename = filenames_list(k).name;
     file_path = fullfile(filenames_list(k).folder, filename);
     disp(['Now processing file ' filename '...'])
-    if ~exist([output_path 'Variables from ' filename '.mat'])
+    if ~exist([path filesep 'Variables from ' filename '.mat'])
         [spot_table,spot_ID_map,edge_map,G] = processTMoutputs(filename,file_path);
     else
         if ~skip_flag
@@ -30,7 +27,7 @@ for k = 1 : length(filenames_list)
             if y==1; skip_flag=true; end
         end
         if ask==1
-            load([output_path 'Variables from ' filename '.mat']);
+            load([path filesep 'Variables from ' filename '.mat']);
         else
             [spot_table,spot_ID_map,edge_map,G] = processTMoutputs(filename,file_path);
         end
@@ -61,7 +58,6 @@ beep; disp(['All files successfully processed!'])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function[spot_table,spot_ID_map,edge_map,G] = processTMoutputs(filename,file_path)
-    global output_path;
     disp(['Analyzing spots for ' filename '...'])
     [spot_table, spot_ID_map] = trackmateSpots(file_path)
     writetable(spot_table, [output_path 'Spot Table of ' filename '.csv']);
@@ -72,7 +68,6 @@ function[spot_table,spot_ID_map,edge_map,G] = processTMoutputs(filename,file_pat
 end
 
 function [edgeinfo] = process_edges(spot_table,edge_map,frame_range,filename)
-    global output_path;
     track_names = edge_map.keys;
     edgeinfo = table();
     for i = 1:edge_map.Count
@@ -106,7 +101,6 @@ function [edgeinfo] = process_edges(spot_table,edge_map,frame_range,filename)
 end
 
 function [t_removed] = analyze_split_merge(G,filename,path)
-    global output_path;
     %Get list of nodes with indegree 0 and outdegree >0 (indicating it is a
     %parent node)
     parent_nodes = find(indegree(G)==0 & outdegree(G)>0);
