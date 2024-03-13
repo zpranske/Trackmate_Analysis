@@ -72,7 +72,7 @@ function G = trackmateGraph(filePath, spotFeatureList, edgeFeatureList, verbose)
     %% Import spot table.
     
     if verbose
-        fprintf('Importing spot table. ')
+        fprintf('Importing spot table for graphing. ')
         tic
     end
     
@@ -86,7 +86,7 @@ function G = trackmateGraph(filePath, spotFeatureList, edgeFeatureList, verbose)
     %% Import edge table.
     
     if verbose
-        fprintf('Importing edge table. ')
+        fprintf('Importing edge table for graphing. ')
         tic
     end
     
@@ -115,7 +115,7 @@ function G = trackmateGraph(filePath, spotFeatureList, edgeFeatureList, verbose)
     
     EndNodes = [ s t ];
     nodeTable = table( EndNodes );
-    nt = horzcat( nodeTable, edgeTable );
+    nt = horzcat( nodeTable, edgeTable )
     
     G = digraph( nt, spotTable );
     
